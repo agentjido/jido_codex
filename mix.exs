@@ -45,9 +45,11 @@ defmodule JidoCodex.MixProject do
 
   defp deps do
     [
-      # Runtime
-      {:jido_harness, "~> 0.1"},
-      {:codex_sdk, "~> 0.10"},
+      # Core ecosystem
+      {:zoi, "~> 0.16"},
+      {:splode, "~> 0.3"},
+      {:jido_harness, path: "../jido_harness"},
+      # {:codex_sdk, "~> 0.10"},
       {:jason, "~> 1.4"},
 
       # Dev/Test
