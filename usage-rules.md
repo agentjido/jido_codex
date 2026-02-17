@@ -1,81 +1,67 @@
-# JidoCodex Usage Rules for AI/LLM Development
+# Jido.Codex Usage Rules for AI/LLM Development
 
-## Context
+## Scope
 
-JidoCodex is a thin adapter wrapping the Codex SDK to implement the JidoHarness.Adapter behaviour.
+`jido_codex` is harness-first. Keep functionality focused on:
+- implementing `Jido.Harness.Adapter`
+- mapping Codex stream events into `Jido.Harness.Event`
+- compatibility checks and minimal operational tasks
 
-## Key Concepts
+Avoid broad non-harness management wrappers.
 
-### Adapter Pattern
-- `JidoCodex.Adapter` implements `JidoHarness.Adapter` behaviour
-- `JidoCodex.Mapper` translates Codex SDK events to normalized `JidoHarness.Event` structs
-- Keep the adapter thin — delegate to `codex_sdk` for heavy lifting
+## Module and Path Conventions
 
-### Error Handling
-- All errors use `Splode` error composition (when implemented)
-- Validation errors use `JidoCodex.Error.InvalidInputError`
-- Execution errors use `JidoCodex.Error.ExecutionFailureError`
+- Namespace: `Jido.Codex.*`
+- Runtime code location: `lib/jido_codex/`
+- Mix tasks location: `lib/mix/tasks/`
 
-### Schema Validation
-- Core structs use Zoi schemas
-- Use `new/1` and `new!/1` for struct construction with validation
-- Validation logic stays in schemas, not scattered in functions
+Primary files:
+- `lib/jido_codex/codex.ex`
+- `lib/jido_codex/adapter.ex`
+- `lib/jido_codex/mapper.ex`
+- `lib/jido_codex/options.ex`
+- `lib/jido_codex/compatibility.ex`
+- `lib/jido_codex/session_registry.ex`
 
-## Development Guidelines
+## Transport and Metadata Contract
 
-### Adding Modules
-1. Create under `lib/jido_codex/`
-2. Add `@moduledoc` with clear description
-3. Define Zoi schema for any structs
-4. Document all public functions with `@doc` and `@spec`
-5. Create tests in `test/jido_codex/`
+Provider metadata lives under `RunRequest.metadata["codex"]`.
 
-### Testing
+Supported keys:
+- `"transport"`: `"exec"` | `"app_server"`
+- `"thread_id"` / `"resume_last"`
+- `"codex_opts"` / `"thread_opts"` / `"turn_opts"`
+- `"app_server"` connect options
+- `"cancel_mode"`: `"immediate"` | `"after_turn"`
+
+Precedence:
+- runtime adapter opts > metadata > defaults derived from `RunRequest`
+
+## Event Mapping Rules
+
+- Always emit normalized `%Jido.Harness.Event{}`.
+- Use canonical types first (`:session_started`, `:output_text_delta`, `:session_completed`, etc.).
+- Use `:codex_*` extensions for provider-specific semantics.
+- Include `provider: :codex`, ISO-8601 timestamps, and raw passthrough.
+- Unknown events must safely fall back to `:codex_event`.
+
+## Error Handling
+
+- Use `Jido.Codex.Error` helpers for structured errors.
+- Validate/normalize input via `Jido.Codex.Options` (Zoi schema).
+- Do not crash on unknown metadata fields or unknown Codex events.
+
+## Testing Standards
+
+- Keep `mix test` green with coverage >= 90%.
+- Integration tests must be tagged `:integration` and excluded by default.
+- Add unit coverage for mapper branches, option precedence, transport behavior, and cancellation paths.
+
+## Quality Gates
+
+Run before merging:
+
 ```bash
-mix test --cover        # Run tests with coverage
-mix quality             # Full quality checks
+mix test
+mix quality
 ```
-
-### Common Commands
-```bash
-mix setup               # Setup environment
-mix test                # Run tests
-mix quality             # Lint, format, dialyzer, doctor
-mix docs                # Generate documentation
-mix doctor --raise      # Check doc coverage
-```
-
-## Git Workflow
-
-Use conventional commits:
-```bash
-git commit -m "feat(mapper): add event translation for X"
-git commit -m "fix(adapter): handle error case in Y"
-git commit -m "docs: clarify usage of Z"
-```
-
-Valid commit types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`
-
-## Code Standards
-
-- Line length: 120 characters
-- No `IO.puts` — use `Logger` for output
-- All public functions need `@doc` and `@spec`
-- No `jido_dep/4` helper functions
-- Tests must have >90% coverage
-
-## Integration Points
-
-### Codex SDK
-- Wraps `CodexSdk.execute/2` for running prompts
-- Maps SDK response events to `JidoHarness.Event` structs
-
-### JidoHarness
-- Implements `JidoHarness.Adapter` behaviour
-- Events comply with `JidoHarness.Event` schema
-
-## Questions?
-
-- Review `AGENTS.md` for project-specific instructions
-- Check `GENERIC_PACKAGE_QA.md` for ecosystem standards
-- Look at `jido_amp` or `jido_claude` for adapter patterns

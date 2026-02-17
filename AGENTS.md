@@ -1,22 +1,28 @@
-# AGENTS.md — JidoCodex
+# AGENTS.md — Jido.Codex
 
 ## Overview
 
-JidoCodex is a thin adapter wrapping the `codex_sdk` package to implement the `JidoHarness.Adapter` behaviour.
+`jido_codex` is a harness-first adapter wrapping `codex_sdk` to implement `Jido.Harness.Adapter`.
 
 ## Key Files
 
-- `lib/jido_codex.ex` — Public API (`run/2`)
-- `lib/jido_codex/adapter.ex` — `JidoHarness.Adapter` implementation
-- `lib/jido_codex/mapper.ex` — Event mapping from Codex SDK to JidoHarness events
+- `lib/jido_codex/codex.ex` — public API (`run/2`, `run_request/2`, `cancel/1`)
+- `lib/jido_codex/adapter.ex` — `Jido.Harness.Adapter` implementation
+- `lib/jido_codex/mapper.ex` — Codex SDK event mapping to `Jido.Harness.Event`
+- `lib/jido_codex/options.ex` — metadata/runtime normalization and precedence handling
+- `lib/jido_codex/compatibility.ex` — exec/app-server compatibility checks
 
 ## Commands
 
 - `mix test` — Run tests
-- `mix quality` — Full quality check (compile, format, credo, dialyzer, doctor)
+- `mix quality` — Full quality check (warnings-as-errors, format, credo, dialyzer, doctor)
+- `mix codex.install` — CLI discoverability check
+- `mix codex.compat` — transport compatibility diagnostics
+- `mix codex.smoke` — minimal runtime smoke execution
 
 ## Conventions
 
 - Follow standard Elixir conventions
-- Use `Logger` for output
-- Keep the adapter thin — delegate to `codex_sdk` for heavy lifting
+- Keep adapter scope harness-first (no broad management wrappers)
+- Preserve module namespace as `Jido.Codex.*`
+- Keep adapter/runtime code under `lib/jido_codex/`

@@ -1,21 +1,54 @@
-# Contributing to JidoCodex
+# Contributing to Jido.Codex
 
-Thanks for your interest in contributing!
+## Development Setup
 
-## Getting Started
+1. Clone the repo.
+2. Install deps:
 
-1. Fork and clone the repo
-2. Run `mix setup` to install dependencies
-3. Run `mix test` to verify everything works
-4. Create a feature branch and make your changes
-5. Run `mix quality` before submitting a PR
+```bash
+mix setup
+```
 
-## Guidelines
+3. Run tests:
 
-- Follow standard Elixir conventions and `mix format`
-- Add tests for new functionality
-- Keep commits focused and use conventional commit messages
+```bash
+mix test
+```
+
+4. Run quality checks:
+
+```bash
+mix quality
+```
+
+## Contribution Standards
+
+- Target Elixir `~> 1.18`.
+- Keep adapter behavior aligned with `Jido.Harness.Adapter`.
+- Use Zoi for validation and Splode-style structured errors.
+- Add or update tests for all behavior changes.
+- Keep coverage at or above the configured threshold (90%).
+- Use conventional commits (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`).
+
+## Project Layout
+
+- `lib/jido_codex/codex.ex` - public API facade
+- `lib/jido_codex/adapter.ex` - adapter implementation
+- `lib/jido_codex/mapper.ex` - Codex -> `Jido.Harness.Event` mapping
+- `lib/jido_codex/options.ex` - metadata/runtime option normalization
+- `lib/jido_codex/compatibility.ex` - CLI compatibility checks
+- `lib/mix/tasks/` - `codex.install`, `codex.compat`, `codex.smoke`
+
+## Integration Tests
+
+Integration tests are tagged `:integration` and excluded by default.
+
+Run them explicitly when Codex CLI and auth are available:
+
+```bash
+mix test --include integration
+```
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under Apache-2.0.
+By contributing, you agree contributions are licensed under Apache-2.0.

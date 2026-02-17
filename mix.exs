@@ -1,9 +1,9 @@
-defmodule JidoCodex.MixProject do
+defmodule Jido.Codex.MixProject do
   use Mix.Project
 
   @version "0.1.0"
   @source_url "https://github.com/agentjido/jido_codex"
-  @description "OpenAI Codex CLI adapter for JidoHarness"
+  @description "OpenAI Codex CLI adapter for Jido.Harness"
 
   def project do
     [
@@ -14,22 +14,49 @@ defmodule JidoCodex.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),
-      # Documentation
-      name: "JidoCodex",
-      description: @description,
+      name: "Jido.Codex",
       source_url: @source_url,
       homepage_url: @source_url,
       docs: [
-        main: "JidoCodex",
-        extras: ["README.md", "CHANGELOG.md"],
+        main: "Jido.Codex",
+        extras: ["README.md", "CHANGELOG.md", "guides/getting-started.md"],
         formatters: ["html"]
       ],
-      # Hex packaging
+      dialyzer: [
+        plt_add_apps: [:mix]
+      ],
+      test_coverage: [
+        tool: ExCoveralls,
+        summary: [threshold: 90]
+      ],
+      description: @description,
       package: [
         name: :jido_codex,
         description: @description,
+        files: [
+          ".formatter.exs",
+          "CHANGELOG.md",
+          "CONTRIBUTING.md",
+          "LICENSE",
+          "README.md",
+          "config",
+          "guides",
+          "lib",
+          "mix.exs",
+          "usage-rules.md"
+        ],
         licenses: ["Apache-2.0"],
         links: %{"GitHub" => @source_url}
+      ]
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.github": :test,
+        "coveralls.html": :test
       ]
     ]
   end
@@ -44,15 +71,30 @@ defmodule JidoCodex.MixProject do
   defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
+    runtime_deps() ++ dev_test_deps()
+  end
+
+  defp runtime_deps do
     [
-      # Core ecosystem
       {:zoi, "~> 0.16"},
       {:splode, "~> 0.3"},
-      {:jido_harness, path: "../jido_harness"},
-      # {:codex_sdk, "~> 0.10"},
-      {:jason, "~> 1.4"},
+      harness_dep(),
+      {:codex_sdk, "~> 0.10"},
+      {:jason, "~> 1.4"}
+    ]
+  end
 
-      # Dev/Test
+  # Keep release-like semver by default, with workspace override convenience.
+  defp harness_dep do
+    if File.dir?("../jido_harness") do
+      {:jido_harness, "~> 0.1", path: "../jido_harness", override: true}
+    else
+      {:jido_harness, "~> 0.1"}
+    end
+  end
+
+  defp dev_test_deps do
+    [
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
@@ -65,11 +107,12 @@ defmodule JidoCodex.MixProject do
 
   defp aliases do
     [
-      setup: ["deps.get"],
+      setup: ["deps.get", "git_hooks.install"],
+      q: ["quality"],
       quality: [
-        "compile",
+        "compile --warnings-as-errors",
         "format --check-formatted",
-        "credo --strict",
+        "credo --min-priority higher",
         "dialyzer",
         "doctor --raise"
       ],
