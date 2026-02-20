@@ -77,7 +77,7 @@ defmodule Jido.Codex.MixProject do
   defp runtime_deps do
     [
       {:zoi, "~> 0.16"},
-      {:splode, "~> 0.3"},
+      {:splode, ">= 0.2.9 and < 0.4.0"},
       harness_dep(),
       {:codex_sdk, "~> 0.10"},
       {:jason, "~> 1.4"}

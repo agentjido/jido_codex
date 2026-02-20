@@ -117,6 +117,14 @@ defmodule Jido.Codex.AdapterTest do
     assert caps.cancellation? == true
   end
 
+  test "runtime_contract/0 exposes codex runtime requirements" do
+    contract = Adapter.runtime_contract()
+    assert contract.provider == :codex
+    assert "OPENAI_API_KEY" in contract.host_env_required_any
+    assert "codex" in contract.runtime_tools_required
+    assert is_list(contract.compatibility_probes)
+  end
+
   test "run/2 executes in exec mode and maps events" do
     request = Jido.Harness.RunRequest.new!(%{prompt: "hello", metadata: %{}})
 

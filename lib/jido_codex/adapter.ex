@@ -9,6 +9,7 @@ defmodule Jido.Codex.Adapter do
   alias Jido.Harness.Capabilities
   alias Jido.Harness.Event
   alias Jido.Harness.RunRequest
+  alias Jido.Harness.RuntimeContract
 
   @impl true
   @spec id() :: atom()
@@ -57,6 +58,48 @@ defmodule Jido.Codex.Adapter do
 
   def cancel(other) do
     {:error, Error.validation_error("session_id must be a non-empty string", %{value: other})}
+  end
+
+  @impl true
+  @spec runtime_contract() :: RuntimeContract.t()
+  def runtime_contract do
+    RuntimeContract.new!(%{
+      provider: :codex,
+      host_env_required_any: ["OPENAI_API_KEY"],
+      host_env_required_all: [],
+      sprite_env_forward: ["OPENAI_API_KEY", "GH_TOKEN", "GITHUB_TOKEN"],
+      sprite_env_injected: %{
+        "GH_PROMPT_DISABLED" => "1",
+        "GIT_TERMINAL_PROMPT" => "0"
+      },
+      runtime_tools_required: ["codex"],
+      compatibility_probes: [
+        %{
+          "name" => "codex_help_exec",
+          "command" => "codex --help || codex exec --help",
+          "expect_any" => ["exec", "--json"]
+        }
+      ],
+      install_steps: [
+        %{
+          "tool" => "codex",
+          "when_missing" => true,
+          "command" => "if command -v npm >/dev/null 2>&1; then npm install -g @openai/codex; else echo 'npm not available'; exit 1; fi"
+        }
+      ],
+      auth_bootstrap_steps: [
+        "if [ -n \"${OPENAI_API_KEY:-}\" ]; then printenv OPENAI_API_KEY | codex login --with-api-key >/dev/null 2>&1 || true; fi",
+        "codex login status >/dev/null 2>&1 || true"
+      ],
+      triage_command_template:
+        "if command -v timeout >/dev/null 2>&1; then timeout 120 codex exec --json --full-auto - < {{prompt_file}}; else codex exec --json --full-auto - < {{prompt_file}}; fi",
+      coding_command_template:
+        "if command -v timeout >/dev/null 2>&1; then timeout 180 codex exec --json --dangerously-bypass-approvals-and-sandbox - < {{prompt_file}}; else codex exec --json --dangerously-bypass-approvals-and-sandbox - < {{prompt_file}}; fi",
+      success_markers: [
+        %{"type" => "turn.completed"},
+        %{"type" => "result", "subtype" => "success"}
+      ]
+    })
   end
 
   defp build_execution_context(%Options{} = options) do
