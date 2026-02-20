@@ -123,6 +123,14 @@ defmodule Jido.Codex.AdapterTest do
     assert "OPENAI_API_KEY" in contract.host_env_required_any
     assert "codex" in contract.runtime_tools_required
     assert is_list(contract.compatibility_probes)
+    assert Enum.any?(contract.compatibility_probes, &(&1["command"] == "codex --help || codex exec --help"))
+
+    assert Enum.any?(contract.auth_bootstrap_steps, fn step ->
+             String.contains?(step, "codex login --with-api-key")
+           end)
+
+    assert String.contains?(contract.triage_command_template, "codex exec --json")
+    assert String.contains?(contract.coding_command_template, "--dangerously-bypass-approvals-and-sandbox")
   end
 
   test "run/2 executes in exec mode and maps events" do
@@ -267,6 +275,17 @@ defmodule Jido.Codex.AdapterTest do
 
     events = Enum.to_list(stream)
     assert Enum.map(events, & &1.type) == [:codex_warning]
+    assert SessionRegistry.list() == []
+  end
+
+  test "run/2 cleans registered sessions when stream is halted early" do
+    Application.put_env(:jido_codex, :stub_run_result_events, fn _rr ->
+      Stream.cycle([Fixtures.run_item(Fixtures.thread_started("session-1"))])
+    end)
+
+    request = Jido.Harness.RunRequest.new!(%{prompt: "hello", metadata: %{}})
+    assert {:ok, stream} = Adapter.run(request)
+    assert [_first] = Enum.take(stream, 1)
     assert SessionRegistry.list() == []
   end
 

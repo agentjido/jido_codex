@@ -5,9 +5,8 @@ defmodule Jido.Codex.Adapter do
 
   @behaviour Jido.Harness.Adapter
 
-  alias Jido.Codex.{Compatibility, Error, Mapper, Options, SessionRegistry}
+  alias Jido.Codex.{Compatibility, Error, Execution, Mapper, Options, SessionRegistry, Stream}
   alias Jido.Harness.Capabilities
-  alias Jido.Harness.Event
   alias Jido.Harness.RunRequest
   alias Jido.Harness.RuntimeContract
 
@@ -35,20 +34,21 @@ defmodule Jido.Codex.Adapter do
   def run(%RunRequest{} = request, opts \\ []) when is_list(opts) do
     with {:ok, normalized} <- Options.from_run_request(request, opts),
          :ok <- compatibility_module().check(normalized.transport),
-         {:ok, context} <- build_execution_context(normalized) do
-      {:ok, build_event_stream(context)}
+         {:ok, context} <- execution_module().build_context(normalized, execution_deps()) do
+      {:ok, stream_module().build(context, stream_opts())}
     end
   rescue
-    e in [ArgumentError] -> {:error, Error.validation_error("Invalid run request", %{details: Exception.message(e)})}
+    e in [ArgumentError] ->
+      {:error, Error.validation_error("Invalid run request", %{details: Exception.message(e)})}
   end
 
   @impl true
   @spec cancel(String.t()) :: :ok | {:error, term()}
   def cancel(session_id) when is_binary(session_id) and session_id != "" do
-    with {:ok, entry} <- SessionRegistry.fetch(session_id) do
+    with {:ok, entry} <- session_registry_module().fetch(session_id) do
       _ = entry.run_result_module.cancel(entry.run_result, entry.cancel_mode)
       maybe_disconnect(entry.app_server_connection)
-      SessionRegistry.delete(session_id)
+      session_registry_module().delete(session_id)
       :ok
     else
       {:error, :not_found} ->
@@ -103,135 +103,23 @@ defmodule Jido.Codex.Adapter do
     })
   end
 
-  defp build_execution_context(%Options{} = options) do
-    with {:ok, codex_opts} <- codex_options_module().new(options.codex_opts),
-         {:ok, app_server_connection} <- maybe_connect_app_server(options, codex_opts),
-         thread_opts <- build_thread_opts(options.thread_opts, options.transport, app_server_connection),
-         {:ok, thread} <- build_thread(options, codex_opts, thread_opts),
-         {:ok, run_result} <- codex_thread_module().run_streamed(thread, options.prompt, options.turn_opts) do
-      {:ok,
-       %{
-         run_result: run_result,
-         run_result_module: codex_run_result_module(),
-         app_server_connection: app_server_connection,
-         cancel_mode: options.cancel_mode
-       }}
-    else
-      {:error, _} = error ->
-        error
-    end
+  defp execution_deps do
+    %{
+      codex_module: codex_module(),
+      codex_options_module: codex_options_module(),
+      codex_thread_module: codex_thread_module(),
+      codex_run_result_module: codex_run_result_module(),
+      codex_app_server_module: codex_app_server_module()
+    }
   end
 
-  defp maybe_connect_app_server(%Options{transport: :exec}, _codex_opts), do: {:ok, nil}
-
-  defp maybe_connect_app_server(%Options{transport: :app_server, app_server: app_server_opts}, codex_opts) do
-    opts = to_keyword(app_server_opts)
-
-    case codex_app_server_module().connect(codex_opts, opts) do
-      {:ok, connection} ->
-        {:ok, connection}
-
-      {:error, reason} ->
-        {:error, Error.execution_error("Unable to establish Codex app-server connection", %{details: reason})}
-    end
-  end
-
-  defp build_thread_opts(thread_opts, :exec, _app_server_connection), do: thread_opts
-
-  defp build_thread_opts(thread_opts, :app_server, app_server_connection) when is_pid(app_server_connection) do
-    Map.put(thread_opts, :transport, {:app_server, app_server_connection})
-  end
-
-  defp build_thread(%Options{resume_last: true}, codex_opts, thread_opts) do
-    codex_module().resume_thread(:last, codex_opts, thread_opts)
-  end
-
-  defp build_thread(%Options{thread_id: thread_id}, codex_opts, thread_opts)
-       when is_binary(thread_id) and thread_id != "" do
-    codex_module().resume_thread(thread_id, codex_opts, thread_opts)
-  end
-
-  defp build_thread(_options, codex_opts, thread_opts) do
-    codex_module().start_thread(codex_opts, thread_opts)
-  end
-
-  defp build_event_stream(%{
-         run_result: run_result,
-         run_result_module: run_result_module,
-         app_server_connection: app_server_connection,
-         cancel_mode: cancel_mode
-       }) do
-    source_stream = run_result_module.events(run_result)
-    mapper = mapper_module()
-
-    Stream.transform(
-      source_stream,
-      fn -> %{session_id: nil, registered?: false} end,
-      fn codex_event, state ->
-        case mapper.map_event(codex_event, []) do
-          {:ok, mapped_events} when is_list(mapped_events) ->
-            {mapped_events,
-             maybe_register_session(
-               state,
-               mapped_events,
-               run_result,
-               run_result_module,
-               app_server_connection,
-               cancel_mode
-             )}
-
-          {:error, reason} ->
-            error_event = mapper_error_event(reason)
-            {[error_event], state}
-        end
-      end,
-      fn state ->
-        if state.registered? and is_binary(state.session_id), do: SessionRegistry.delete(state.session_id)
-        maybe_disconnect(app_server_connection)
-      end
-    )
-  end
-
-  defp mapper_error_event(reason) do
-    Event.new!(%{
-      type: :session_failed,
+  defp stream_opts do
+    [
       provider: :codex,
-      session_id: nil,
-      timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
-      payload: %{"error" => inspect(reason)},
-      raw: reason
-    })
-  end
-
-  defp maybe_register_session(
-         %{registered?: true} = state,
-         _events,
-         _run_result,
-         _run_result_module,
-         _conn,
-         _cancel_mode
-       ),
-       do: state
-
-  defp maybe_register_session(state, events, run_result, run_result_module, app_server_connection, cancel_mode) do
-    session_id =
-      events
-      |> Enum.find_value(fn event ->
-        if is_binary(event.session_id) and event.session_id != "", do: event.session_id, else: nil
-      end)
-
-    if is_binary(session_id) and session_id != "" do
-      SessionRegistry.register(session_id, %{
-        run_result: run_result,
-        run_result_module: run_result_module,
-        app_server_connection: app_server_connection,
-        cancel_mode: cancel_mode
-      })
-
-      %{state | session_id: session_id, registered?: true}
-    else
-      state
-    end
+      mapper_module: mapper_module(),
+      session_registry: session_registry_module(),
+      disconnect: &maybe_disconnect/1
+    ]
   end
 
   defp maybe_disconnect(nil), do: :ok
@@ -241,14 +129,24 @@ defmodule Jido.Codex.Adapter do
     :ok
   end
 
-  defp to_keyword(map), do: Enum.to_list(map)
-
   defp mapper_module do
     Application.get_env(:jido_codex, :mapper_module, Mapper)
   end
 
   defp compatibility_module do
     Application.get_env(:jido_codex, :compatibility_module, Compatibility)
+  end
+
+  defp execution_module do
+    Application.get_env(:jido_codex, :execution_module, Execution)
+  end
+
+  defp stream_module do
+    Application.get_env(:jido_codex, :stream_module, Stream)
+  end
+
+  defp session_registry_module do
+    Application.get_env(:jido_codex, :session_registry_module, SessionRegistry)
   end
 
   defp codex_module do

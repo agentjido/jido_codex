@@ -31,4 +31,36 @@ defmodule Jido.Codex.SessionRegistryTest do
     SessionRegistry.clear()
     assert SessionRegistry.list() == []
   end
+
+  test "removes sessions when owner process exits" do
+    owner =
+      spawn(fn ->
+        receive do
+          :stop -> :ok
+        end
+      end)
+
+    SessionRegistry.register(
+      "owned-session",
+      %{run_result: :rr, run_result_module: Mod, cancel_mode: :immediate},
+      owner: owner
+    )
+
+    assert {:ok, _entry} = SessionRegistry.fetch("owned-session")
+    send(owner, :stop)
+    wait_until(fn -> match?({:error, :not_found}, SessionRegistry.fetch("owned-session")) end)
+  end
+
+  defp wait_until(fun, attempts \\ 20)
+
+  defp wait_until(_fun, 0), do: flunk("condition not met")
+
+  defp wait_until(fun, attempts) do
+    if fun.() do
+      :ok
+    else
+      Process.sleep(10)
+      wait_until(fun, attempts - 1)
+    end
+  end
 end
