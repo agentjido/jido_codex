@@ -32,7 +32,7 @@ mix quality
 
 ## Project Layout
 
-- `lib/jido_codex/codex.ex` - public API facade
+- `lib/jido_codex.ex` - public API facade
 - `lib/jido_codex/adapter.ex` - adapter implementation
 - `lib/jido_codex/mapper.ex` - Codex -> `Jido.Harness.Event` mapping
 - `lib/jido_codex/options.ex` - metadata/runtime option normalization

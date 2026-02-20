@@ -6,7 +6,7 @@
 
 ## Key Files
 
-- `lib/jido_codex/codex.ex` — public API (`run/2`, `run_request/2`, `cancel/1`)
+- `lib/jido_codex.ex` — public API (`run/2`, `run_request/2`, `cancel/1`)
 - `lib/jido_codex/adapter.ex` — `Jido.Harness.Adapter` implementation
 - `lib/jido_codex/mapper.ex` — Codex SDK event mapping to `Jido.Harness.Event`
 - `lib/jido_codex/options.ex` — metadata/runtime normalization and precedence handling

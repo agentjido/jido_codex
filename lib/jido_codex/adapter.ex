@@ -84,7 +84,8 @@ defmodule Jido.Codex.Adapter do
         %{
           "tool" => "codex",
           "when_missing" => true,
-          "command" => "if command -v npm >/dev/null 2>&1; then npm install -g @openai/codex; else echo 'npm not available'; exit 1; fi"
+          "command" =>
+            "if command -v npm >/dev/null 2>&1; then npm install -g @openai/codex; else echo 'npm not available'; exit 1; fi"
         }
       ],
       auth_bootstrap_steps: [

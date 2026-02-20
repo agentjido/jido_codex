@@ -16,7 +16,7 @@ Avoid broad non-harness management wrappers.
 - Mix tasks location: `lib/mix/tasks/`
 
 Primary files:
-- `lib/jido_codex/codex.ex`
+- `lib/jido_codex.ex`
 - `lib/jido_codex/adapter.ex`
 - `lib/jido_codex/mapper.ex`
 - `lib/jido_codex/options.ex`
