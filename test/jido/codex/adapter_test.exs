@@ -1,6 +1,12 @@
 defmodule Jido.Codex.AdapterTest do
   use ExUnit.Case, async: false
 
+  use Jido.Harness.AdapterContract,
+    adapter: Jido.Codex.Adapter,
+    provider: :codex,
+    check_run: true,
+    run_request: %{prompt: "contract codex run", cwd: "/repo", metadata: %{}}
+
   alias Jido.Codex.{Adapter, SessionRegistry}
 
   alias Jido.Codex.Test.{
