@@ -11,6 +11,9 @@ defmodule Jido.Codex.Execution do
           required(:codex_app_server_module) => module()
         }
 
+  @doc """
+  Builds Codex execution context, including run result and optional app-server connection.
+  """
   @spec build_context(Options.t(), deps()) :: {:ok, map()} | {:error, term()}
   def build_context(%Options{} = options, deps) when is_map(deps) do
     with {:ok, codex_opts} <- deps.codex_options_module.new(options.codex_opts),

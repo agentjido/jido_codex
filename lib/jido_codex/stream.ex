@@ -11,6 +11,9 @@ defmodule Jido.Codex.Stream do
           {:disconnect, (pid() | nil -> any())}
         ]
 
+  @doc """
+  Builds a normalized harness event stream from a Codex run result context.
+  """
   @spec build(map(), stream_opts()) :: Enumerable.t()
   def build(
         %{
