@@ -78,19 +78,10 @@ defmodule Jido.Codex.MixProject do
     [
       {:zoi, "~> 0.17"},
       {:splode, ">= 0.2.9 and < 0.4.0"},
-      harness_dep(),
+      {:jido_harness, github: "agentjido/jido_harness", branch: "main", override: true},
       {:codex_sdk, "~> 0.10"},
       {:jason, "~> 1.4"}
     ]
-  end
-
-  # Keep release-like semver by default, with workspace override convenience.
-  defp harness_dep do
-    if File.dir?("../jido_harness") do
-      {:jido_harness, "~> 0.1", path: "../jido_harness", override: true}
-    else
-      {:jido_harness, "~> 0.1"}
-    end
   end
 
   defp dev_test_deps do

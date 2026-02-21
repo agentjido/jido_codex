@@ -137,3 +137,13 @@ Integration tests are opt-in and excluded by default (`@tag :integration`).
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
+
+## Package Purpose
+
+`jido_codex` is the Codex CLI adapter for `jido_harness`, including Codex event mapping plus execution/session contract logic.
+
+## Testing Paths
+
+- Unit/contract tests: `mix test`
+- Full quality gate: `mix quality`
+- Optional live checks: `mix codex.install && mix codex.compat`
