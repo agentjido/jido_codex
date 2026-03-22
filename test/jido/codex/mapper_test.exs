@@ -84,7 +84,8 @@ defmodule Jido.Codex.MapperTest do
     assert {:ok, [warn2]} = Mapper.map_event(Fixtures.warning(), [])
     assert warn2.type == :codex_warning
 
-    assert {:ok, [complete]} = Mapper.map_event(Fixtures.turn_completed(), [])
+    assert {:ok, [usage, complete]} = Mapper.map_event(Fixtures.turn_completed(), [])
+    assert usage.type == :usage
     assert complete.type == :session_completed
 
     assert {:ok, [failed]} = Mapper.map_event(Fixtures.turn_failed(), [])
@@ -102,14 +103,15 @@ defmodule Jido.Codex.MapperTest do
     assert {:ok, [event]} = Mapper.map_event(run_item, [])
     assert event.type == :codex_turn_started
 
-    {:ok, [raw_1, raw_2]} =
+    {:ok, [raw_1, raw_2, raw_3]} =
       Mapper.map_event(
         %Codex.StreamEvent.RawResponses{events: [Fixtures.turn_started(), Fixtures.turn_completed()]},
         []
       )
 
     assert raw_1.type == :codex_turn_started
-    assert raw_2.type == :session_completed
+    assert raw_2.type == :usage
+    assert raw_3.type == :session_completed
 
     assert {:ok, [agent_updated]} =
              Mapper.map_event(%Codex.StreamEvent.AgentUpdated{agent: nil, run_config: nil}, [])
