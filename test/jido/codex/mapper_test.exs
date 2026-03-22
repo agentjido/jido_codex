@@ -57,7 +57,7 @@ defmodule Jido.Codex.MapperTest do
     assert file_change.type == :file_change
 
     assert {:ok, [usage]} = Mapper.map_event(Fixtures.usage_updated(), [])
-    assert usage.type == :usage
+    assert usage.type == :codex_token_update
   end
 
   test "maps extended codex events" do
@@ -111,6 +111,7 @@ defmodule Jido.Codex.MapperTest do
 
     assert raw_1.type == :codex_turn_started
     assert raw_2.type == :usage
+    assert raw_2.payload["input_tokens"] == 1
     assert raw_3.type == :session_completed
 
     assert {:ok, [agent_updated]} =
