@@ -75,7 +75,15 @@ defmodule Jido.Codex.Test.Fixtures do
   end
 
   def rate_limits_updated(session_id \\ "session-abc") do
-    %Events.AccountRateLimitsUpdated{thread_id: session_id, turn_id: "turn-1", rate_limits: %{"rpm" => 60}}
+    snapshot = %Codex.Protocol.RateLimit.Snapshot{
+      primary: %Codex.Protocol.RateLimit.Window{used_percent: 4.0}
+    }
+
+    %Events.AccountRateLimitsUpdated{
+      thread_id: session_id,
+      turn_id: "turn-1",
+      rate_limits: snapshot
+    }
   end
 
   def turn_diff_updated(session_id \\ "session-abc") do
