@@ -63,6 +63,7 @@ defmodule Jido.Codex.MapperTest do
   test "maps extended codex events" do
     assert {:ok, [rate]} = Mapper.map_event(Fixtures.rate_limits_updated(), [])
     assert rate.type == :codex_rate_limits_updated
+    assert rate.payload["rate_limits"]["primary"]["used_percent"] == 4.0
 
     assert {:ok, [diff]} = Mapper.map_event(Fixtures.turn_diff_updated(), [])
     assert diff.type == :codex_turn_diff_updated
