@@ -261,9 +261,12 @@ defmodule Jido.Codex.Mapper do
       "usage" => event.usage
     }
 
-    usage_event = maybe_usage_event(event.usage, event.thread_id, event)
+    session_completed = build_event(:session_completed, event.thread_id, payload, event)
 
-    {:ok, List.wrap(usage_event) ++ [build_event(:session_completed, event.thread_id, payload, event)]}
+    case maybe_usage_event(event.usage, event.thread_id, event) do
+      nil -> {:ok, [session_completed]}
+      usage_event -> {:ok, [usage_event, session_completed]}
+    end
   end
 
   def map_event(%Events.TurnFailed{} = event, _opts) do
