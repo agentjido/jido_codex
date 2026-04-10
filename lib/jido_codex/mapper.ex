@@ -129,13 +129,16 @@ defmodule Jido.Codex.Mapper do
   # McpToolCall items from exec transport
   def map_event(%Events.ItemCompleted{item: %Items.McpToolCall{} = item} = event, _opts) do
     call_id = item.id || "mcp-#{System.unique_integer([:positive])}"
+    tool_name = item.tool || "mcp_tool"
+    tool_output = item.result || item.error || ""
+    tool_error? = item.status == :failed || not is_nil(item.error)
 
     tool_call =
       build_event(
         :tool_call,
         event.thread_id,
         %{
-          "name" => item.name || "mcp_tool",
+          "name" => tool_name,
           "input" => item.arguments || %{},
           "call_id" => call_id
         },
@@ -147,10 +150,10 @@ defmodule Jido.Codex.Mapper do
         :tool_result,
         event.thread_id,
         %{
-          "name" => item.name || "mcp_tool",
-          "output" => item.output || "",
+          "name" => tool_name,
+          "output" => tool_output,
           "call_id" => call_id,
-          "is_error" => item.status == :failed
+          "is_error" => tool_error?
         },
         event
       )

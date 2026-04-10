@@ -95,6 +95,20 @@ defmodule Jido.Codex.Test.Fixtures do
     %Events.McpToolCallProgress{thread_id: session_id, turn_id: "turn-1", item_id: "item-1", message: "progress"}
   end
 
+  def item_completed_mcp_tool_call(session_id \\ "session-abc") do
+    item = %Items.McpToolCall{
+      id: "mcp-1",
+      server: "filesystem",
+      tool: "read_file",
+      arguments: %{"path" => "README.md"},
+      result: %{"content" => "hello"},
+      error: nil,
+      status: :completed
+    }
+
+    %Events.ItemCompleted{thread_id: session_id, turn_id: "turn-1", item: item}
+  end
+
   def request_user_input() do
     %Events.RequestUserInput{id: "req-1", turn_id: "turn-1", questions: [%{"question" => "Continue?"}]}
   end

@@ -77,6 +77,21 @@ defmodule Jido.Codex.MapperTest do
     assert rui.type == :codex_request_user_input
   end
 
+  test "maps completed MCP tool calls using the canonical struct fields" do
+    assert {:ok, [call, result]} = Mapper.map_event(Fixtures.item_completed_mcp_tool_call(), [])
+
+    assert call.type == :tool_call
+    assert call.payload["name"] == "read_file"
+    assert call.payload["input"] == %{"path" => "README.md"}
+    assert call.payload["call_id"] == "mcp-1"
+
+    assert result.type == :tool_result
+    assert result.payload["name"] == "read_file"
+    assert result.payload["output"] == %{"content" => "hello"}
+    assert result.payload["call_id"] == "mcp-1"
+    assert result.payload["is_error"] == false
+  end
+
   test "maps warnings and terminal states" do
     assert {:ok, [warn]} = Mapper.map_event(Fixtures.config_warning(), [])
     assert warn.type == :codex_warning
