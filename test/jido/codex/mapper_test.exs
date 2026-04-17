@@ -4,6 +4,14 @@ defmodule Jido.Codex.MapperTest do
   alias Jido.Codex.Mapper
   alias Jido.Codex.Test.Fixtures
 
+  defmodule RateLimitWindowStub do
+    defstruct [:used_percent]
+  end
+
+  defmodule RateLimitSnapshotStub do
+    defstruct [:primary]
+  end
+
   test "maps session start events" do
     assert {:ok, [event]} = Mapper.map_event(Fixtures.thread_started(), [])
     assert event.type == :session_started
@@ -75,6 +83,20 @@ defmodule Jido.Codex.MapperTest do
 
     assert {:ok, [rui]} = Mapper.map_event(Fixtures.request_user_input(), [])
     assert rui.type == :codex_request_user_input
+  end
+
+  test "maps rate limit payloads that contain nested structs" do
+    rate_limits = %RateLimitSnapshotStub{primary: %RateLimitWindowStub{used_percent: 4.0}}
+
+    event = %Codex.Events.AccountRateLimitsUpdated{
+      thread_id: "session-abc",
+      turn_id: "turn-1",
+      rate_limits: rate_limits
+    }
+
+    assert {:ok, [mapped]} = Mapper.map_event(event, [])
+    assert mapped.type == :codex_rate_limits_updated
+    assert mapped.payload["rate_limits"]["primary"]["used_percent"] == 4.0
   end
 
   test "maps completed MCP tool calls using the canonical struct fields" do
