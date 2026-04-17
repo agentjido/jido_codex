@@ -136,6 +136,15 @@ mix quality
 
 Integration tests are opt-in and excluded by default (`@tag :integration`).
 
+The primary live adapter checks are:
+
+```bash
+mix test --include integration test/jido/codex/integration/compatibility_integration_test.exs
+mix test --include integration test/jido/codex/integration/run_integration_test.exs
+```
+
+These tests auto-load `.env`.
+
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
@@ -149,3 +158,13 @@ Apache-2.0. See [LICENSE](LICENSE).
 - Unit/contract tests: `mix test`
 - Full quality gate: `mix quality`
 - Optional live checks: `mix codex.install && mix codex.compat`
+
+## Live Integration Test Knobs
+
+- `OPENAI_API_KEY` if you want Codex to use API-key auth instead of existing CLI login state
+- `JIDO_CODEX_LIVE_PROMPT` to override the default prompt
+- `JIDO_CODEX_LIVE_CWD` to override the working directory
+- `JIDO_CODEX_LIVE_MODEL` to force a specific model
+- `JIDO_CODEX_LIVE_TIMEOUT_MS` to extend the per-run timeout
+- `JIDO_CODEX_REQUIRE_SUCCESS=1` to fail unless the terminal event is successful
+- `JIDO_CODEX_CLI_PATH` to target a non-default Codex CLI binary
