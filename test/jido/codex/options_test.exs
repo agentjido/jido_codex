@@ -21,6 +21,7 @@ defmodule Jido.Codex.OptionsTest do
     assert options.prompt == "hello"
     assert options.transport == :exec
     assert options.cancel_mode == :immediate
+    assert options.codex_opts.model == "gpt-5"
     assert options.thread_opts.working_directory == "/tmp/project"
     assert options.thread_opts.model == "gpt-5"
     assert options.thread_opts.developer_instructions == "be concise"

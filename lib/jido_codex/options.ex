@@ -93,7 +93,9 @@ defmodule Jido.Codex.Options do
       thread_id: nil,
       resume_last: false,
       cancel_mode: :immediate,
-      codex_opts: %{},
+      codex_opts:
+        %{}
+        |> maybe_put(:model, request.model),
       thread_opts:
         %{}
         |> maybe_put(:working_directory, request.cwd)

@@ -93,7 +93,7 @@ Precedence:
 Default mapping from `RunRequest`:
 - `prompt` -> streamed turn input
 - `cwd` -> `thread_opts.working_directory`
-- `model` -> `thread_opts.model`
+- `model` -> `codex_opts.model` and `thread_opts.model`
 - `max_turns` -> `turn_opts.max_turns`
 - `timeout_ms` -> `turn_opts.timeout_ms`
 - `system_prompt` -> `thread_opts.developer_instructions`
