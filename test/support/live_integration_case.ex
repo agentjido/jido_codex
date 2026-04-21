@@ -105,7 +105,6 @@ defmodule Jido.Codex.LiveIntegrationCase do
     end
   end
 
-  defp truthy?(true), do: true
   defp truthy?("true"), do: true
   defp truthy?("1"), do: true
   defp truthy?("yes"), do: true
