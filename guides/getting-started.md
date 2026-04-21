@@ -11,8 +11,8 @@ This guide covers the main flows for `jido_codex`:
 ```elixir
 defp deps do
   [
-    {:jido_harness, "~> 0.1"},
-    {:jido_codex, "~> 0.1"}
+    {:jido_harness, github: "agentjido/jido_harness", branch: "main", override: true},
+    {:jido_codex, github: "agentjido/jido_codex", branch: "main"}
   ]
 end
 ```

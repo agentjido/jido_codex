@@ -1,12 +1,16 @@
 defmodule Jido.Codex.Integration.CompatibilityTest do
   use ExUnit.Case
+  use Jido.Codex.LiveIntegrationCase
 
   alias Jido.Codex.Compatibility
 
-  @moduletag :integration
+  @integration_skip_reason Jido.Codex.LiveIntegrationCase.skip_reason()
 
-  test "compatibility checks run against local environment" do
-    result = Compatibility.check(:exec)
-    assert result == :ok or match?({:error, _}, result)
+  if @integration_skip_reason do
+    @moduletag skip: @integration_skip_reason
+  end
+
+  test "compatibility checks pass against the live CLI" do
+    assert :ok = Compatibility.check(:exec)
   end
 end

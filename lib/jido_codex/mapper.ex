@@ -350,6 +350,12 @@ defmodule Jido.Codex.Mapper do
 
   defp maybe_usage_event(_, _, _), do: nil
 
+  defp stringify_keys(value) when is_struct(value) do
+    value
+    |> Map.from_struct()
+    |> stringify_keys()
+  end
+
   defp stringify_keys(value) when is_map(value) do
     value
     |> Enum.map(fn {k, v} -> {to_string(k), stringify_keys(v)} end)
