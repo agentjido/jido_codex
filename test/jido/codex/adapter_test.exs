@@ -120,6 +120,7 @@ defmodule Jido.Codex.AdapterTest do
     caps = Adapter.capabilities()
     assert caps.streaming? == true
     assert caps.tool_calls? == true
+    assert caps.resume? == true
     assert caps.cancellation? == true
   end
 
@@ -164,6 +165,34 @@ defmodule Jido.Codex.AdapterTest do
     _ = Enum.to_list(stream)
 
     assert_receive {:resume_thread, "thread-123", _codex_opts, _thread_opts}
+  end
+
+  test "run/2 maps harness session_id to codex thread_id" do
+    request =
+      Jido.Harness.RunRequest.new!(%{
+        prompt: "hello",
+        session_id: "thread-from-harness",
+        metadata: %{}
+      })
+
+    assert {:ok, stream} = Adapter.run(request)
+    _ = Enum.to_list(stream)
+
+    assert_receive {:resume_thread, "thread-from-harness", _codex_opts, _thread_opts}
+  end
+
+  test "codex metadata thread_id overrides harness session_id" do
+    request =
+      Jido.Harness.RunRequest.new!(%{
+        prompt: "hello",
+        session_id: "thread-from-harness",
+        metadata: %{"codex" => %{"thread_id" => "thread-from-metadata"}}
+      })
+
+    assert {:ok, stream} = Adapter.run(request)
+    _ = Enum.to_list(stream)
+
+    assert_receive {:resume_thread, "thread-from-metadata", _codex_opts, _thread_opts}
   end
 
   test "run/2 uses resume_last when configured" do
