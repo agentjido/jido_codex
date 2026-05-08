@@ -90,7 +90,7 @@ defmodule Jido.Codex.Options do
   defp request_defaults(%RunRequest{} = request) do
     %{
       transport: :exec,
-      thread_id: nil,
+      thread_id: normalize_session_id(request.session_id),
       resume_last: false,
       cancel_mode: :immediate,
       codex_opts:
@@ -156,6 +156,12 @@ defmodule Jido.Codex.Options do
   defp normalize_cancel_mode(value) do
     {:error, Error.validation_error("Invalid cancel mode", %{field: :cancel_mode, value: value})}
   end
+
+  defp normalize_session_id(session_id) when is_binary(session_id) do
+    if String.trim(session_id) == "", do: nil, else: session_id
+  end
+
+  defp normalize_session_id(_session_id), do: nil
 
   defp fetch_value(map, key) do
     atom_value = Map.get(map, key)

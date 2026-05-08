@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Map harness `RunRequest.session_id` to Codex `thread_id` resume behavior.
+
 ## v0.1.0
 
 - Hard rename to `Jido.Codex.*` modules
