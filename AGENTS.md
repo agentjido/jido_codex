@@ -26,3 +26,7 @@
 - Keep adapter scope harness-first (no broad management wrappers)
 - Preserve module namespace as `Jido.Codex.*`
 - Keep adapter/runtime code under `lib/jido_codex/`
+
+## Release Hygiene
+
+- Do not modify `CHANGELOG.md`; release notes are generated from Git history during release, so keep changes focused on proper Conventional Commits.
