@@ -51,9 +51,6 @@ defmodule Jido.Codex.LiveIntegrationCase do
 
       {:error, :enoent} ->
         "Codex CLI is not available. Install it with `mix codex.install`."
-
-      {:error, reason} ->
-        "Codex CLI could not be resolved: #{inspect(reason)}"
     end
   end
 
