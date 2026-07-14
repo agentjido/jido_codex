@@ -14,6 +14,17 @@ defmodule Jido.Codex.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),
+      # No compatible patched transitive releases are available yet.
+      hex: [
+        ignore_advisories: [
+          "CVE-2026-43969",
+          "CVE-2026-43966",
+          "CVE-2026-47075",
+          "CVE-2026-47076",
+          "CVE-2026-47071",
+          "CVE-2026-47069"
+        ]
+      ],
       name: "Jido.Codex",
       source_url: @source_url,
       homepage_url: @source_url,
